@@ -1,101 +1,63 @@
-# Predicting Financial Market Volatility and Safe-Haven Behavior  
-## Is Bitcoin the New Digital Gold?
+# Is Bitcoin a Safe Haven Like Gold?
 
-This project examines whether machine learning models can predict financial market volatility more accurately than traditional econometric approaches, and whether Bitcoin exhibits safe-haven characteristics comparable to gold.
+Empirical study of Bitcoin, gold and the S&P 500 on daily data from 2018 to 2025: volatility, time-varying correlations, dynamic betas, and a comparison of GARCH(1,1) with machine-learning models for volatility forecasting.
 
-The analysis focuses on three major asset classes:
-- **S&P 500** – traditional equity market
-- **Bitcoin** – digital asset
-- **Gold** – historical safe-haven asset
+Individual project, MSc in Finance, HEC Lausanne (course *Data Science and Advanced Programming*). Full ten-page report: [Report.pdf](Report.pdf).
 
-The study covers the period **2018–2025** and combines volatility forecasting with supervised classification techniques to identify safe-haven regimes.
+## Key findings
 
----
+- **Bitcoin is not digital gold.** Its annualised volatility is 64.1%, **3.81 times** that of gold (14.2%). Despite an annualised return of 34% against 10% for gold, its Sharpe ratio is lower (0.49 against 0.69).
+- **Its link with equities has changed.** The 30-day rolling correlation between Bitcoin and the S&P 500 rose from **+0.01** in 2018-2019 to **+0.32** in 2020-2021, with an average beta of +0.76 against +0.04 for gold.
+- **It fails when protection is needed.** Bitcoin was uncorrelated or negatively correlated with equities 21% of the time (42% for gold), and only **4.3%** of the time when the VIX was above its 75th percentile.
 
-## Research Questions
+![Rolling correlation and beta](results/outputs/plots/03_correlation_beta.png)
 
-1. Can machine learning models outperform classical econometric models (e.g. GARCH) in forecasting market volatility?
-2. Does Bitcoin behave like a safe-haven asset similar to gold, particularly during periods of market stress?
+## Method
 
----
+| Step | What is done |
+|---|---|
+| Data | Daily prices from Yahoo Finance (`yfinance`): BTC-USD, ^GSPC, GC=F, ^VIX. 1,788 business days after alignment. |
+| Features | Log returns, 30-day realised volatility (annualised), 30-day rolling correlation, 60-day rolling beta, lags at 1, 5 and 10 days. |
+| Validation | Strict chronological split: training 2018-2021, out-of-sample test 2022-2025 (748 observations). No random shuffling. |
+| Volatility models | GARCH(1,1) baseline (`arch`), Random Forest, Gradient Boosting, XGBoost. |
+| Regime classification | Logistic regression and tree ensembles predicting whether the BTC/S&P 500 correlation is ≤ 0 five days ahead. |
 
-## Methodology Overview
+### Limitations
 
-This project implements a complete end-to-end quantitative pipeline in Python.
+The machine-learning models receive current realised volatility as an input, while GARCH(1,1) uses returns only, so their lower forecast error reflects a richer information set as much as a better model class. The classification target and its main predictor are rolling windows that overlap heavily, which inflates the AUC. The report therefore separates statistical predictability from economic usefulness.
 
-### Data
-- Daily financial data retrieved from **Yahoo Finance** using the `yfinance` API
-- Assets analyzed: Bitcoin (BTC-USD), S&P 500 (^GSPC), Gold Futures (GC=F), and VIX (^VIX)
-- Business-day alignment to ensure consistency between cryptocurrency markets (7-day trading) and traditional markets (5-day trading)
+## Run it
 
-### Feature Engineering
-- Log-returns
-- 30-day rolling volatility (annualized)
-- Rolling correlations (Bitcoin vs S&P 500)
-- Rolling betas (Bitcoin and Gold vs S&P 500)
-- Lagged features to avoid look-ahead bias
-
-### Models
-
-**Volatility Forecasting**
-- GARCH(1,1) as econometric benchmark
-- Random Forest
-- Gradient Boosting
-- XGBoost
-
-**Safe-Haven Classification**
-- Logistic Regression
-- Random Forest
-- Gradient Boosting
-- XGBoost
-
-### Evaluation Metrics
-- RMSE and MAE for volatility forecasting
-- Accuracy, Precision, Recall, F1-score, and AUC-ROC for classification
-
----
-
-## Repository Structure
-
-ADA/
-│
-├── Final.ipynb              # Complete analysis notebook (main entry point)
-├── requirements.txt          # Python dependencies
-├── README.md                # Project documentation
-├── ADA_Report_Dylan_Zermatten.pdf  # 📄 Final project report
-├── .gitignore
-│
-└── outputs/
-    ├── data/                # Processed datasets and model outputs
-    ├── plots/               # Generated figures
-    └── reports/             # Final tables and reports
-
-
-
-##  Setup Instructions
-
-Follow the steps below to install and run the project locally.
-
-### 1. Clone the repository
 ```bash
-git clone https://github.com/DylanZermatten/ADA.git
-cd ADA
-
+git clone https://github.com/DylanZermatten/bitcoin-safe-haven.git
+cd bitcoin-safe-haven
 python -m venv venv
-
-venv\Scripts\activate
-
-python -m pip install --upgrade pip
-
+venv\Scripts\activate          # macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
+python main.py                 # or open notebooks/Final.ipynb
+```
 
-### 2 Options
+Data is downloaded at runtime; no dataset is stored in the repository. Outputs are written to `outputs/`. The results shown above are saved in `results/outputs/`.
 
-python -m jupyter lab notebooks/Final.ipynb
+## Repository structure
 
-python main.py
+```text
+bitcoin-safe-haven/
+├── main.py                     # full pipeline, end to end
+├── notebooks/Final.ipynb       # same analysis as a notebook
+├── src/                        # the pipeline split by stage
+│   ├── 01_data_preparation.py
+│   ├── 02_exploratory_analysis.py
+│   ├── 03_volatility_forecasting.py
+│   ├── 04_safe_haven_classification.py
+│   └── 05_conclusions.py
+├── results/outputs/            # saved figures, tables and model metrics
+├── Report.pdf                  # ten-page report
+├── Proposal.md                 # initial project proposal
+├── AI_USAGE.md                 # how AI tools were used
+└── requirements.txt
+```
 
+## Use of AI
 
-
-
-
+AI assistants (mainly Claude) were used for debugging, code review and documentation. See [AI_USAGE.md](AI_USAGE.md).
